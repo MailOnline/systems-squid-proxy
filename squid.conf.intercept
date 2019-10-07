@@ -581,9 +581,10 @@
 always_direct allow all
 
 
-#cache_peer 172.17.66.11  parent 15600 0 no-query default
+#cache_peer news-search-proxy-london.aws.mol.dmgt.net parent 80 0 no-query default
+#cache_peer 110.74.196.229 parent 443 0 no-query default
 #acl all src 0.0.0.0/0.0.0.0
-#never_direct allow all 
+#never_direct allow all
 
 
 
@@ -602,8 +603,8 @@ always_direct allow all
 #
 #Recommended minimum configuration:
 #acl manager proto cache_object
-acl localhost src 127.0.0.1/32
-acl to_localhost dst 127.0.0.0/8
+acl localhost src 127.0.0.1/32 ::1
+acl to_localhost dst 127.0.0.0/8 0.0.0.0/32 ::1
 #
 # Example rule allowing access from your local networks.
 # Adapt to list your (internal) IP networks from where browsing
@@ -892,10 +893,9 @@ htcp_access deny all
 #	visible on the internal address.
 #
 # Squid normally listens to port 3128
-visible_hostname squid.yourdomain.com
-http_port 3128 ssl-bump generate-host-certificates=on cert=/apps/server_crt.pem key=/apps/server_key.pem  sslflags=DONT_VERIFY_PEER
+visible_hostname squid.mol.dmgt.net
+http_port 3128 ssl-bump generate-host-certificates=on cert=/apps/myCA/CA_crt.pem key=/apps/myCA/CA_key.pem  sslflags=DONT_VERIFY_PEER
 
-always_direct allow all  
 ssl_bump server-first all  
 sslproxy_cert_error deny all  
 sslproxy_flags DONT_VERIFY_PEER  
@@ -908,7 +908,7 @@ icap_preview_size    128
 icap_send_client_ip  on
 
 #icap_service url_check  reqmod_precache 0 icap://localhost:1344/url_check
-adaptation_access url_check  allow all
+#adaptation_access url_check  allow all
 
 
 #  TAG: https_port
@@ -2410,10 +2410,10 @@ debug_options ALL,1
 #	used.
 #
 #Suggested default:
-refresh_pattern ^ftp:		1440	20%	10080
-refresh_pattern ^gopher:	1440	0%	1440
-refresh_pattern (cgi-bin|\?)	0	0%	0
-refresh_pattern .		0	20%	4320
+#refresh_pattern ^ftp:		1440	20%	10080
+#refresh_pattern ^gopher:	1440	0%	1440
+#refresh_pattern (cgi-bin|\?)	0	0%	0
+#refresh_pattern .               0       20%     4320
 
 #  TAG: quick_abort_min	(KB)
 #  TAG: quick_abort_max	(KB)
@@ -4870,4 +4870,18 @@ coredump_dir /apps/squid/var/cache
 # Number of instances of the above program that should run concurrently.
 # 5 is good enough but you should go for 10 at least. Anything below 5 would not work properly.
 #redirect_children 5
+cache_mem 1024 MB
+
+# Uncomment and adjust the following to add a disk cache directory.
+#cache_dir ufs /apps/squid/var/cache/squid 100 16 256
+
+# Leave coredumps in the first cache dir
+#coredump_dir /apps/squid/var/cache
+
+
+# Add any of your own refresh_pattern entries above these.
+#refresh_pattern ^ftp:		1440	20%	10080
+#refresh_pattern ^gopher:	1440	0%	1440
+#refresh_pattern -i (/cgi-bin/|\?) 0	0%	0
+refresh_pattern .	600	100%	600	override-expire		 override-lastmod			 ignore-reload		 	 ignore-no-store		 ignore-must-revalidate		 ignore-private
 
